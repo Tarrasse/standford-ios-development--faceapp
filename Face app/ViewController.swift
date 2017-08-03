@@ -8,18 +8,56 @@
 
 import UIKit
 
-class ViewController: UIViewController {
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
+class FaceViewController: UIViewController {
+    
+    var exepression = FacialExpression(eyes: .Open, mouth: .Frown){
+        didSet{
+            updateUi()
+        }
     }
-
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
+    
+    @IBOutlet var faceView: FaceView!{
+        didSet{
+            faceView.addGestureRecognizer(UIPinchGestureRecognizer(target: faceView, action: #selector(FaceView.changeScale)))
+            let happierSwipeGestureRecognizer = UISwipeGestureRecognizer(target: self, action: #selector(increaseHapiness))
+            happierSwipeGestureRecognizer.direction = .up
+            faceView.addGestureRecognizer(happierSwipeGestureRecognizer)
+            let sadderSwipeGestureRecongizer = UISwipeGestureRecognizer(target: self, action: #selector(decreaseHapiness))
+            sadderSwipeGestureRecongizer.direction = .down
+            faceView.addGestureRecognizer(sadderSwipeGestureRecongizer)
+            updateUi()
+        }
     }
-
-
+    
+    private let mouthCurvatures = [FacialExpression.Mouth.Frown : -1.0,
+    .Grin: 0.5, .Smile: 1.0, .Smirk: -0.5, .Neutral: 0.0 ]
+    
+    private func updateUi(){
+        switch exepression.eyes {
+        case .Open: faceView.eyesAreOpen = true
+        case .Closed : faceView.eyesAreOpen = false
+        default:
+            faceView.eyesAreOpen = false
+        }
+        faceView.mouthCurve = mouthCurvatures[exepression.mouth] ?? 0.0
+    }
+    @IBAction func toggleEye(_ sender: UITapGestureRecognizer) {
+        if sender.state == .ended{
+            switch exepression.eyes {
+            case .Open:
+                exepression.eyes = .Closed
+            case .Closed:
+                exepression.eyes = .Open
+            default:
+                break
+            }
+        }
+    }
+    func increaseHapiness() {
+        exepression.mouth = exepression.mouth.happierMouth()
+    }
+    func decreaseHapiness() {
+        exepression.mouth = exepression.mouth.sadderMouth()
+    }
 }
 
